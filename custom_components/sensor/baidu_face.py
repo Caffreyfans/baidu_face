@@ -76,7 +76,6 @@ class FaceSensor(Entity):
 		self._group_id = group_id
 		self._pic_url = pic_url
 		self._token = token
-		self._should_poll = True
 		self.exists_path()
 
 		
@@ -154,7 +153,6 @@ class FaceSensor(Entity):
 			return access_json['access_token']
 		else:
 			_LOGGER.error("There is some wrong about your baidu api settings")
-			self._should_poll = False
 			return None
 
 
@@ -203,6 +201,7 @@ class FaceSensor(Entity):
 			if ((ret_json["result"][0]["scores"][0] > PASS_SCORE) and (faceliveness > THRESHOLD)):
 				return True
 		else:
+			_LOGGER.error(ret.text)
 			return False
 
 
