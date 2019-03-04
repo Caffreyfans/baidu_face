@@ -1,6 +1,6 @@
-# face identity for [Home Assistant](https://home-assistant.io)
-TODO: add face identity sensor 
+# face identity for [Home Assistant](https://home-assistant.io)  
 
+程序可能存在 BUG,如有任何问题请提出我会在第一时间解决。
     
 ## 使用
 下载插件, 并将 baidu_face.py 放置于 custom_components/sensor 文件夹下
