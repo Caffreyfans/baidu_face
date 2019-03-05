@@ -13,7 +13,7 @@ sensor:
   - platform : baidu_face
     api_key : "*************"
     secret_key: "***********"
-    group_list: "['myself', 'family']"
+    group_list: "['myself', 'family']" # 格式例子
     camera_entity_id: "*****"    
     token: "****************"
     # liveness: "NORMAL"
