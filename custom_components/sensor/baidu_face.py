@@ -1,4 +1,4 @@
-""" 利用百度人脸识别 API v2 进行人脸识别 """
+""" 利用百度人脸识别 API v3 进行人脸识别 """
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -98,7 +98,7 @@ class FaceSensor(Entity):
 	@property
 	def entity_picture(self):
 		if (self._state == True):
-			pic_path = "/local/images/" + self._pic_name
+			pic_path = LOCAL_PATH + self._pic_name
 			return pic_path
 		else:
 			return self._pic_url
