@@ -27,7 +27,7 @@ sensor:
 |---|---|---|---|
 | api_key | 是 | string | 百度人脸识别应用 **API Key** |
 | secret_key | 是 | string | 百度人脸识别应用 **Secret Key** |
-| group_list | 是 | string | 人脸库用户组**组名**最多支持 10 个|
+| group_list | 是 | string | 人脸库用户组**组名** (1~10) 个之内|
 | camera_entity_id | 是 | string | ha 中摄像头实体 **id** |
 | token | 是 | string | ha 中永久令牌 **token** |
 | scan_interval | 是 | int | 每次检测检测时间<br> # 建议 **2**|
