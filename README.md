@@ -24,7 +24,7 @@ sensor:
 ```
 
 | 参数 | 必选 | 类型 | 说明 |
-|-|-|-|
+|---|---|---|---|
 | api_key | 是 | string | 百度人脸识别应用 API Key |
 | secret_key | 是 | string | 百度人脸识别应用 Secret Key |
 | group_list | 是 | string | 人脸库用户组组名 |
