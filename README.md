@@ -31,7 +31,7 @@ sensor:
 | camera_entity_id | 是 | string | ha 中摄像头实体 **id** |
 | token | 是 | string | ha 中永久令牌 **token** |
 | scan_interval | 是 | int | 每次检测检测时间<br> # 建议 **2**|
-| liveness | 否 | string | 活体检测控制 <br> **NONE**: 不进行控制 <br> **LOW**:较低的活体要求(高通过率 低攻击拒绝率) <br> **NORMAL**: 一般的活体要求(平衡的攻击拒绝率, 通过率) <br> **HIGH**: 较高的活体要求(高攻击拒绝率 低通过率) <br> 默认**NONE** <br> 若活体检测结果不满足要求，则返回结果中会提示活体检测失败 |
+| liveness | 否 | string | 活体检测控制 <br> **NONE**: 不进行控制 <br> **LOW**:较低的活体要求(高通过率 低攻击拒绝率) <br> **NORMAL**: 一般的活体要求(平衡的攻击拒绝率, 通过率) <br> **HIGH**: 较高的活体要求(高攻击拒绝率 低通过率) <br> 默认**NORMAL** <br> 若活体检测结果不满足要求，则返回结果中会提示活体检测失败 |
 | name | 否 | string | 该实体名 <br> # 默认 **"ren lian shi bie"**|
 | port | 否 | int | ha 设定的端口号 <br> # 默认 **8123**|
 | pic_url | 否 | string | 识别失败时显示的图片 <br> # 默认 **魔方gif图** |
