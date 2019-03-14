@@ -1,4 +1,4 @@
-""" 利用百度人脸识别 API v3 进行人脸识别 """
+""" 利用百度人脸识别 APIv3 进行人脸识别. """
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -178,13 +178,12 @@ class FaceSensor(Entity):
 		import os
 		docker_path = "/config"
 		hassbian_path = "/home/homeassistant/.homeassistant"
-		if (os.path.exists(hassbian_path)):
-			hassbian_path = hassbian_path + "/www/images/"
-			if not (os.path.exists(hassbian_path)):
-				os.makedirs(hassbian_path)
-			self._save_path = hassbian_path
-		elif (os.path.exists(docker_path)):
-			docker_path = docker_path + "/www/images/"
-			if not (os.path.exists(docker_path)):				
-				os.makedirs(docker_path)
-			self._save_path = docker_path
+		raspbian_path = "/home/pi/.homeassistant"
+		path_list = [docker_path, hassbian_path, raspbian_path]
+		for path in path_list:
+			if (os.path.exists(path)):
+				path = path + "/www/images"
+				if not (os.path.exists(path)):
+					os.makedirs(path)
+				self._save_path = path
+				break
