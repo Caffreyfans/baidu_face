@@ -170,7 +170,8 @@ class FaceSensor(Entity):
 					ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
 				self._pic_name = ATTR_LIST[ATTR_UID] + ".jpg"
 				save_path = self._save_path + self._pic_name
-				self.download_picture(save_path)
+				import shutil
+				shutil.copyfile(picPath, save_path)
 				return True
 		return False
 
@@ -182,7 +183,7 @@ class FaceSensor(Entity):
 		path_list = [docker_path, hassbian_path, raspbian_path]
 		for path in path_list:
 			if (os.path.exists(path)):
-				path = path + "/www/images"
+				path = path + "/www/images/"
 				if not (os.path.exists(path)):
 					os.makedirs(path)
 				self._save_path = path
