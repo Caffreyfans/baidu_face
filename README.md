@@ -5,7 +5,7 @@
 ![演示](https://raw.githubusercontent.com/Caffreyfans/baidu_identity/master/gif/demo.gif)
 
 ## 使用
-下载插件, 并将 baidu_face.py 放置于 custom_components/sensor 文件夹下
+下载插件, 并将 sensor.py 放置于 custom_components/baidu_face 文件夹下
 
 ## 配置示例 :
 ```YAML
