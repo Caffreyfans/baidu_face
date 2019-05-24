@@ -124,11 +124,23 @@ class FaceSensor(Entity):
 			
 	def download_picture(self, savePath):
 		""" download picture from homeassistant """
+		from http import HTTPStatus
 		t = int(round(time.time()))
-		url = "http://127.0.0.1:{}/api/camera_proxy/{}?time={} -o image.jpg".format(self._port, self._camera_entity_id, t)
+		http_url = "http://127.0.0.1:{}".format(self._port)
+		https_url = "https://127.0.0.1:{}".format(self._port)
+		url = http_url
+		try:
+			status_code = requests.get(url).status_code
+		except:
+			status_code = HTTPStatus.INTERNAL_SERVER_ERROR
+		if status_code == HTTPStatus.OK :
+			url = http_url
+		else:
+			url = https_url
+		camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(url, self._camera_entity_id, t)
 		headers = {'Authorization': "Bearer {}".format(self._token),
 					'content-type': 'application/json'}
-		response = requests.get(url, headers=headers)
+		response = requests.get(camera_url, headers=headers)
 		with open(savePath, 'wb') as fp:
 		    fp.write(response.content)
 
