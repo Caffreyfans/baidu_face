@@ -4,8 +4,13 @@
     
 ![演示](https://raw.githubusercontent.com/Caffreyfans/baidu_identity/master/gif/demo.gif)
 
+## 版本更新提示
+---
+> **2019-05-25**<br />
+> 现已适配 0.92.0 之后版本请注意使用最新代码
+
 ## 使用
-下载插件, 并将 sensor.py 放置于 custom_components/baidu_face 文件夹下
+下载插件, 并将 baidu_face 放置于 custom_components 文件夹下
 
 ## 配置示例 :
 ```YAML
