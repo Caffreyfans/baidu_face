@@ -1,0 +1,8 @@
+{
+  "domain": "baidu_face",
+  "name": "baidu_face",
+  "documentation": "https://github.com/Caffreyfans/baidu_identity",
+  "dependencies": [],
+  "codeowners": ["@Caffreyfans"],
+  "requirements": []
+}
