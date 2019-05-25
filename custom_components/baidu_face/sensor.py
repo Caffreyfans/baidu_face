@@ -173,7 +173,6 @@ class FaceSensor(Entity):
 				 'liveness_control' : self._liveness}
 		response = requests.post(url=request_url, headers=headers, data=data)
 		ret_json = json.loads(response.text)
-		_LOGGER.error(response.text)
 		for key in ATTR_LIST:
 			ATTR_LIST[key] = 'null'
 		if ret_json['result']:
