@@ -4,5 +4,5 @@
   "documentation": "https://github.com/Caffreyfans/baidu_identity",
   "dependencies": [],
   "codeowners": ["@Caffreyfans"],
-  "requirements": []
+  "requirements": ["@http==0.02"]
 }

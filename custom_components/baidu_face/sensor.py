@@ -33,10 +33,6 @@ CONF_PIC_URL = 'pic_url'
 CONF_SECRETKEY = 'secret_key'
 CONF_TOKEN = 'token'
 
-
-
-
-
 DEFAULT_NAME = "ren lian shi bie"
 DEFAULT_PIC_URL = 'https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/raw/master/1.gif'
 DEFAULT_PORT = 8123
@@ -56,7 +52,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_SECRETKEY): cv.string,
     vol.Required(CONF_TOKEN): cv.string,
 })
-
 
 def setup_platform(hass, config, add_devices,
 	               discovery_info=None):
@@ -111,7 +106,6 @@ class FaceSensor(Entity):
 	def device_state_attributes(self):
 		return ATTR_LIST
 
-	
 	def update(self):
 		save_path = self._save_path + "tmp.jpg"
 		self.download_picture(save_path)
@@ -120,8 +114,7 @@ class FaceSensor(Entity):
 			self._state = True
 		else:
 			self._state = False
-
-			
+		
 	def download_picture(self, savePath):
 		""" download picture from homeassistant """
 		from http import HTTPStatus
@@ -159,7 +152,6 @@ class FaceSensor(Entity):
 		else:
 			_LOGGER.error("There is some wrong about your baidu api settings")
 			return None
-
 
 	def face_searching(self, picPath):
 		request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
