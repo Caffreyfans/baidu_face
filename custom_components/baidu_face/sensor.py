@@ -126,7 +126,7 @@ class FaceSensor(Entity):
 			status_code = requests.get(url).status_code
 		except:
 			status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-		if status_code == HTTPStatus.OK :
+		if status_code == HTTPStatus.OK:
 			url = http_url
 		else:
 			url = https_url
