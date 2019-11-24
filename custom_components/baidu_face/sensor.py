@@ -109,7 +109,7 @@ class FaceSensor(Entity):
 	def update(self):
 		save_path = self._save_path + "tmp.jpg"
 		self.download_picture(save_path)
-		slef._state = self.face_searching(save_path)
+		self._state = self.face_searching(save_path)
 		
 	def download_picture(self, savePath):
 		""" download picture from homeassistant """
