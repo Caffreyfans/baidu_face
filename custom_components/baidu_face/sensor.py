@@ -8,6 +8,7 @@ import requests
 import json
 from homeassistant.helpers.entity import Entity
 import base64
+from datetime import timedelta
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,6 +41,8 @@ DEFAULT_LIVENESS = 'NORMAL'
 
 LOCAL_PATH = '/local/images/'
 PASS_SCORE = 80.0
+
+SCAN_INTERVAL = timedelta(seconds=1)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_APIKEY): cv.string,
@@ -83,7 +86,7 @@ class FaceSensor(Entity):
 		self._token = token
 		self._state = False
 		self._save_path = ""
-		self._pic_name = ""
+		self._person_name = ""
 		self.exists_path()
 
 	@property
@@ -93,7 +96,7 @@ class FaceSensor(Entity):
 	@property
 	def entity_picture(self):
 		if (self._state == True):
-			pic_path = LOCAL_PATH + self._pic_name
+			pic_path = LOCAL_PATH + self._person_name
 			return pic_path
 		else:
 			return self._pic_url
@@ -107,35 +110,24 @@ class FaceSensor(Entity):
 		return ATTR_LIST
 
 	def update(self):
-		save_path = self._save_path + "tmp.jpg"
-		self.download_picture(save_path)
-		self._state = self.face_searching(save_path)
+		self._state = self.face_searching()
 		
-	def download_picture(self, savePath):
+	def get_picture(self):
 		""" download picture from homeassistant """
-		from http import HTTPStatus
 		t = int(round(time.time()))
 		http_url = "http://127.0.0.1:{}".format(self._port)
-		https_url = "https://127.0.0.1:{}".format(self._port)
-		url = http_url
-		try:
-			status_code = requests.get(url).status_code
-		except:
-			status_code = HTTPStatus.INTERNAL_SERVER_ERROR
-		if status_code == HTTPStatus.OK:
-			url = http_url
-		else:
-			url = https_url
-		camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(url, self._camera_entity_id, t)
+		camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
 		headers = {'Authorization': "Bearer {}".format(self._token),
 					'content-type': 'application/json'}
 		response = requests.get(camera_url, headers=headers)
-		with open(savePath, 'wb') as fp:
-		    fp.write(response.content)
+		return response.content
 
-	def get_base64_file_content(self, filePath):
-	    with open(filePath, 'rb') as fp:
-	        return base64.b64encode(fp.read())
+	def save_picture(self, savePath, content):
+		with open(savePath, 'wb') as fp:
+		    fp.write(content)
+
+	def get_base64_file_content(self, content):
+	    return base64.b64encode(content)
 
 	def get_token(self):
 		grant_type = 'client_credentials'
@@ -149,13 +141,14 @@ class FaceSensor(Entity):
 			_LOGGER.error("There is some wrong about your baidu api settings")
 			return None
 
-	def face_searching(self, picPath):
+	def face_searching(self):
 		request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
 		headers = {'Content-Type' : 'application/json'}
 		group_id_list = eval(self._group_list)
-		img = self.get_base64_file_content(picPath)
+		img = self.get_picture()
+		img_encode = self.get_base64_file_content(img)
 		data = {'image_type' : 'BASE64',
-				 'image' : img,
+				 'image' : img_encode,
 				 'access_token' : self.get_token(),
 				 'group_id_list' : group_id_list,
 				 'liveness_control' : self._liveness}
@@ -163,15 +156,14 @@ class FaceSensor(Entity):
 		ret_json = json.loads(response.text)
 		for key in ATTR_LIST:
 			ATTR_LIST[key] = 'null'
-		if ret_json['result']:
+		if ('result' in ret_json):
 			score = ret_json['result']['user_list'][0]['score']
 			if (score > PASS_SCORE):
 				for key in ATTR_LIST:
 					ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
-				self._pic_name = ATTR_LIST[ATTR_UID] + ".jpg"
-				save_path = self._save_path + self._pic_name
-				import shutil
-				shutil.copyfile(picPath, save_path)
+				self._person_name = ATTR_LIST[ATTR_UID] + ".jpg"
+				save_path = self._save_path + self._person_name
+				self.save_picture(save_path, img)
 				return True
 		return False
 
