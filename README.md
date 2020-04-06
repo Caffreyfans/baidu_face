@@ -2,7 +2,7 @@
 
 程序可能存在 BUG,如有任何问题请提出我会在第一时间解决。
     
-![演示](https://raw.githubusercontent.com/Caffreyfans/baidu_identity/master/gif/demo.gif)
+![演示](gif/demo.gif)
 
 ## 版本更新提示
 ---
