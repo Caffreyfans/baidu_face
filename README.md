@@ -6,6 +6,10 @@
 
 ## 版本更新提示
 ---
+> **2020-04-06**<br />
+> 修改语法错误
+
+---
 > **2020-04-04**<br />
 > 取消 tmp 文件，减少磁盘读写
 ---
@@ -21,7 +25,7 @@ sensor:
   - platform : baidu_face
     api_key : "*************"
     secret_key: "***********"
-    group_list: "['myself', 'family']" # 格式例子
+    group_list: "['myself','family']" # 格式例子,中间不能含有空格
     camera_entity_id: "*****"    
     token: "****************"
     # liveness: "NORMAL"

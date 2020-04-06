@@ -18,10 +18,10 @@ ATTR_UID = 'user_id'
 ATTR_USER_INFO = 'user_info'
 
 ATTR_LIST = {
-	ATTR_GROUP_ID : "null",
-	ATTR_SCORE : "null",
-	ATTR_UID : "null",
-	ATTR_USER_INFO : "null"
+    ATTR_GROUP_ID: "null",
+    ATTR_SCORE: "null",
+    ATTR_UID: "null",
+    ATTR_USER_INFO: "null"
 }
 
 CONF_APIKEY = 'api_key'
@@ -42,7 +42,7 @@ DEFAULT_LIVENESS = 'NORMAL'
 LOCAL_PATH = '/local/images/'
 PASS_SCORE = 80.0
 
-SCAN_INTERVAL = timedelta(seconds=1)
+SCAN_INTERVAL = timedelta(seconds=2)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_APIKEY): cv.string,
@@ -56,8 +56,9 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Required(CONF_TOKEN): cv.string,
 })
 
-def setup_platform(hass, config, add_devices,
-	               discovery_info=None):
+
+async def async_setup_platform(hass, config, async_add_devices,
+                   discovery_info=None):
     """ add sensor components """
     api_key = config.get(CONF_APIKEY)
     camera_entity_id = config.get(CONF_CAMERA_ENTITY_ID)
@@ -69,114 +70,112 @@ def setup_platform(hass, config, add_devices,
     secret_key = config.get(CONF_SECRETKEY)
     token = config.get(CONF_TOKEN)
 
-    add_devices([FaceSensor(api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token)])
+    async_add_devices([FaceSensor(api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token)])
 
 
 class FaceSensor(Entity):
 
-	def __init__(self, api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token):
-		self._api_key = api_key
-		self._camera_entity_id = camera_entity_id
-		self._group_list = group_list
-		self._liveness = liveness
-		self._name = name
-		self._port = str(port)
-		self._pic_url = pic_url
-		self._secret_key = secret_key
-		self._token = token
-		self._state = False
-		self._save_path = ""
-		self._person_name = ""
-		self.exists_path()
+    def __init__(self, api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token):
+        self._api_key = api_key
+        self._camera_entity_id = camera_entity_id
+        self._group_list = group_list
+        self._liveness = liveness
+        self._name = name
+        self._port = str(port)
+        self._pic_url = pic_url
+        self._secret_key = secret_key
+        self._token = token
+        self._state = False
+        self._save_path = ""
+        self._person_name = ""
+        self.exists_path()
 
-	@property
-	def name(self):
-		return self._name
-	
-	@property
-	def entity_picture(self):
-		if (self._state == True):
-			pic_path = LOCAL_PATH + self._person_name
-			return pic_path
-		else:
-			return self._pic_url
+    @property
+    def name(self):
+        return self._name
 
-	@property
-	def state(self):
-		return self._state
-	
-	@property
-	def device_state_attributes(self):
-		return ATTR_LIST
+    @property
+    def entity_picture(self):
+        if self._state is True:
+            pic_path = LOCAL_PATH + self._person_name
+            return pic_path
+        else:
+            return self._pic_url
 
-	def update(self):
-		self._state = self.face_searching()
-		
-	def get_picture(self):
-		""" download picture from homeassistant """
-		t = int(round(time.time()))
-		http_url = "http://127.0.0.1:{}".format(self._port)
-		camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
-		headers = {'Authorization': "Bearer {}".format(self._token),
-					'content-type': 'application/json'}
-		response = requests.get(camera_url, headers=headers)
-		return response.content
+    @property
+    def state(self):
+        return self._state
 
-	def save_picture(self, savePath, content):
-		with open(savePath, 'wb') as fp:
-		    fp.write(content)
+    @property
+    def device_state_attributes(self):
+        return ATTR_LIST
 
-	def get_base64_file_content(self, content):
-	    return base64.b64encode(content)
+    def update(self):
+        self._state = self.face_searching()
 
-	def get_token(self):
-		grant_type = 'client_credentials'
-		request_url = "https://aip.baidubce.com/oauth/2.0/token"
-		params = {'client_id' : self._api_key, "client_secret" : self._secret_key, 'grant_type' : grant_type}
-		response = requests.post(url=request_url, params=params)
-		access_json = json.loads(response.text)
-		if ("access_token" in access_json):
-			return access_json['access_token']
-		else:
-			_LOGGER.error("There is some wrong about your baidu api settings")
-			return None
+    def get_picture(self):
+        """ download picture from homeassistant """
+        t = int(round(time.time()))
+        http_url = "http://127.0.0.1:{}".format(self._port)
+        camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
+        headers = {'Authorization': "Bearer {}".format(self._token),
+                   'content-type': 'application/json'}
+        response = requests.get(camera_url, headers=headers)
+        return response.content
 
-	def face_searching(self):
-		request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
-		headers = {'Content-Type' : 'application/json'}
-		group_id_list = eval(self._group_list)
-		img = self.get_picture()
-		img_encode = self.get_base64_file_content(img)
-		data = {'image_type' : 'BASE64',
-				 'image' : img_encode,
-				 'access_token' : self.get_token(),
-				 'group_id_list' : group_id_list,
-				 'liveness_control' : self._liveness}
-		response = requests.post(url=request_url, headers=headers, data=data)
-		ret_json = json.loads(response.text)
-		for key in ATTR_LIST:
-			ATTR_LIST[key] = 'null'
-		if ('result' in ret_json):
-			score = ret_json['result']['user_list'][0]['score']
-			if (score > PASS_SCORE):
-				for key in ATTR_LIST:
-					ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
-				self._person_name = ATTR_LIST[ATTR_UID] + ".jpg"
-				save_path = self._save_path + self._person_name
-				self.save_picture(save_path, img)
-				return True
-		return False
+    def save_picture(self, savePath, content):
+        with open(savePath, 'wb') as fp:
+            fp.write(content)
+            fp.close()
 
-	def exists_path(self):
-		import os
-		docker_path = "/config"
-		hassbian_path = "/home/homeassistant/.homeassistant"
-		raspbian_path = "/home/pi/.homeassistant"
-		path_list = [docker_path, hassbian_path, raspbian_path]
-		for path in path_list:
-			if (os.path.exists(path)):
-				path = path + "/www/images/"
-				if not (os.path.exists(path)):
-					os.makedirs(path)
-				self._save_path = path
-				break
+    def get_token(self):
+        grant_type = 'client_credentials'
+        request_url = "https://aip.baidubce.com/oauth/2.0/token"
+        params = {'client_id': self._api_key, "client_secret": self._secret_key, 'grant_type': grant_type}
+        response = requests.post(url=request_url, params=params)
+        access_json = json.loads(response.text)
+        if "access_token" in access_json:
+            return access_json['access_token']
+        else:
+            _LOGGER.error("There is some wrong about your baidu api settings")
+            return None
+
+    def face_searching(self):
+        request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
+        headers = {'Content-Type': 'application/json'}
+        group_id_list = eval(self._group_list)
+        img = self.get_picture()
+        img_encode = base64.b64encode(img)
+        data = {'image_type': 'BASE64',
+                'image': img_encode,
+                'access_token': self.get_token(),
+                'group_id_list': group_id_list,
+                'liveness_control': self._liveness}
+        response = requests.post(url=request_url, headers=headers, data=data)
+        ret_json = json.loads(response.text)
+        for key in ATTR_LIST:
+            ATTR_LIST[key] = 'null'
+        if 'result' in ret_json and ret_json['result'] is not None:
+            for key in ATTR_LIST:
+                ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
+            self._person_name = ATTR_LIST[ATTR_UID] + ".jpg"
+            save_path = self._save_path + self._person_name
+            self.save_picture(save_path, img)
+            score = ret_json['result']['user_list'][0]['score']
+            if score > PASS_SCORE:
+                return True
+        return False
+
+    def exists_path(self):
+        import os
+        docker_path = "/config"
+        hassbian_path = "/home/homeassistant/.homeassistant"
+        raspbian_path = "/home/pi/.homeassistant"
+        path_list = [docker_path, hassbian_path, raspbian_path]
+        for path in path_list:
+            if os.path.exists(path):
+                path = path + "/www/images/"
+                if not (os.path.exists(path)):
+                    os.makedirs(path)
+                self._save_path = path
+                break
