@@ -35,7 +35,7 @@ CONF_SECRETKEY = 'secret_key'
 CONF_TOKEN = 'token'
 
 DEFAULT_NAME = "ren lian shi bie"
-DEFAULT_PIC_URL = 'https://dev.tencent.com/u/Caffreyfans/p/public-sources/git/raw/master/1.gif'
+DEFAULT_PIC_URL = 'https://github.com/Caffreyfans/baidu_face/blob/dev/gif/false.gif?raw=true'
 DEFAULT_PORT = 8123
 DEFAULT_LIVENESS = 'NORMAL'
 
