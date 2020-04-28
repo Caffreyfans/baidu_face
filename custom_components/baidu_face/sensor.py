@@ -2,13 +2,19 @@
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-import time
 import logging
 import requests
-import json
+import time
 from homeassistant.helpers.entity import Entity
 import base64
 from datetime import timedelta
+from aip import AipFace
+from homeassistant.const import (
+    CONF_ACCESS_TOKEN,
+    CONF_API_KEY,
+    CONF_NAME,
+    CONF_ENTITY_ID
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,79 +22,84 @@ ATTR_GROUP_ID = 'group_id'
 ATTR_SCORE = 'score'
 ATTR_UID = 'user_id'
 ATTR_USER_INFO = 'user_info'
+ATTR_FACE_NUM = 'face_num'
+ATTR_MATCH_NUM = 'match_num'
+ATTR_USER_LIST = 'user_list'
 
-ATTR_LIST = {
-    ATTR_GROUP_ID: "null",
-    ATTR_SCORE: "null",
-    ATTR_UID: "null",
-    ATTR_USER_INFO: "null"
-}
-
-CONF_APIKEY = 'api_key'
-CONF_CAMERA_ENTITY_ID = 'camera_entity_id'
+CONF_APP_ID = 'app_id'
+CONF_SECRET_KEY = 'secret_key'
 CONF_GROUP_LIST = 'group_list'
 CONF_LIVENESS = 'liveness'
-CONF_NAME = 'name'
+CONF_SCORE = 'score'
 CONF_PORT = 'port'
-CONF_PIC_URL = 'pic_url'
-CONF_SECRETKEY = 'secret_key'
-CONF_TOKEN = 'token'
 
-DEFAULT_NAME = "ren lian shi bie"
-DEFAULT_PIC_URL = 'https://github.com/Caffreyfans/baidu_face/blob/dev/gif/false.gif?raw=true'
+DEFAULT_NAME = "face indentity"
+DEFAULT_WAITING_PIC = 'https://gitee.com/caffreyfans/baidu_face/raw/dev/src/waiting.gif'
 DEFAULT_PORT = 8123
 DEFAULT_LIVENESS = 'NORMAL'
-
-LOCAL_PATH = '/local/images/'
-PASS_SCORE = 80.0
+DEFAULT_SCORE = 80
 
 SCAN_INTERVAL = timedelta(seconds=2)
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_APIKEY): cv.string,
-    vol.Required(CONF_CAMERA_ENTITY_ID): cv.string,
+    vol.Required(CONF_APP_ID): cv.string,
+    vol.Required(CONF_API_KEY): cv.string,
+    vol.Required(CONF_SECRET_KEY): cv.string,
+    vol.Required(CONF_ENTITY_ID): cv.string,
     vol.Required(CONF_GROUP_LIST): cv.string,
+    vol.Required(CONF_ACCESS_TOKEN): cv.string,
     vol.Optional(CONF_LIVENESS, default=DEFAULT_LIVENESS): cv.string,
     vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
     vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_PIC_URL, default=DEFAULT_PIC_URL): cv.string,
-    vol.Required(CONF_SECRETKEY): cv.string,
-    vol.Required(CONF_TOKEN): cv.string,
+    vol.Optional(CONF_SCORE, default=DEFAULT_SCORE): cv.Number
 })
 
 
-async def async_setup_platform(hass, config, async_add_devices,
+def setup_platform(hass, config, add_devices,
                    discovery_info=None):
+    tmp_path = hass.config.path('www/baidu_face/')
+    import os
+    if not os.path.exists(tmp_path):
+        os.makedirs(tmp_path)
+    response = requests.get(DEFAULT_WAITING_PIC)
+    path = tmp_path + 'waiting.gif'
+    with open(path, 'wb') as fp:
+        fp.write(response.content)
+        fp.close()
     """ add sensor components """
-    api_key = config.get(CONF_APIKEY)
-    camera_entity_id = config.get(CONF_CAMERA_ENTITY_ID)
+    app_id = config.get(CONF_APP_ID)
+    api_key = config.get(CONF_API_KEY)
+    secret_key = config.get(CONF_SECRET_KEY)
+    camera_entity_id = config.get(CONF_ENTITY_ID)
     group_list = config.get(CONF_GROUP_LIST)
     liveness = config.get(CONF_LIVENESS)
     name = config.get(CONF_NAME)
     port = config.get(CONF_PORT)
-    pic_url = config.get(CONF_PIC_URL)
-    secret_key = config.get(CONF_SECRETKEY)
-    token = config.get(CONF_TOKEN)
+    token = config.get(CONF_ACCESS_TOKEN)
+    score = config.get(CONF_SCORE)
 
-    async_add_devices([FaceSensor(api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token)])
-
+    baidu_client = AipFace(app_id, api_key, secret_key)
+    options = {}
+    options["max_face_num"] = 10
+    options["match_threshold"] = score
+    options["quality_control"] = 'NONE'
+    options["liveness_control"] = liveness
+    options["max_user_num"] = 10
+    add_devices([FaceSensor(name, camera_entity_id, port, token, baidu_client, group_list, options, tmp_path)])
 
 class FaceSensor(Entity):
 
-    def __init__(self, api_key, camera_entity_id, group_list, liveness, name, port, pic_url, secret_key, token):
-        self._api_key = api_key
+    def __init__(self, name, camera_entity_id, port, token, baidu_client:AipFace, group_list, options, tmp_path):
         self._camera_entity_id = camera_entity_id
-        self._group_list = group_list
-        self._liveness = liveness
         self._name = name
         self._port = str(port)
-        self._pic_url = pic_url
-        self._secret_key = secret_key
         self._token = token
+        self._baidu_client = baidu_client
+        self._group_list = group_list
+        self._options = options
         self._state = False
-        self._save_path = ""
-        self._person_name = ""
-        self.exists_path()
+        self._attr = None
+        self._tmp_dir = tmp_path
 
     @property
     def name(self):
@@ -96,11 +107,12 @@ class FaceSensor(Entity):
 
     @property
     def entity_picture(self):
-        if self._state is True:
-            pic_path = LOCAL_PATH + self._person_name
-            return pic_path
+        pic_path = '/local/baidu_face/'
+        if self._state:
+            pic_path += self._attr[ATTR_UID] + '.jpg'
         else:
-            return self._pic_url
+            pic_path += 'waiting.gif'
+        return pic_path
 
     @property
     def state(self):
@@ -108,10 +120,10 @@ class FaceSensor(Entity):
 
     @property
     def device_state_attributes(self):
-        return ATTR_LIST
+        return self._attr
 
     def update(self):
-        self._state = self.face_searching()
+        self.face_searching()
 
     def get_picture(self):
         """ download picture from homeassistant """
@@ -123,59 +135,44 @@ class FaceSensor(Entity):
         response = requests.get(camera_url, headers=headers)
         return response.content
 
-    def save_picture(self, savePath, content):
-        with open(savePath, 'wb') as fp:
-            fp.write(content)
-            fp.close()
-
-    def get_token(self):
-        grant_type = 'client_credentials'
-        request_url = "https://aip.baidubce.com/oauth/2.0/token"
-        params = {'client_id': self._api_key, "client_secret": self._secret_key, 'grant_type': grant_type}
-        response = requests.post(url=request_url, params=params)
-        access_json = json.loads(response.text)
-        if "access_token" in access_json:
-            return access_json['access_token']
-        else:
-            _LOGGER.error("There is some wrong about your baidu api settings")
-            return None
+    def save_picture(self, file_name, content):
+        import os
+        save_path = self._tmp_dir + file_name + '.jpg'
+        if not os.path.exists(save_path):
+            with open(save_path, 'wb') as fp:
+                fp.write(content)
+                fp.close()
 
     def face_searching(self):
-        request_url = "https://aip.baidubce.com/rest/2.0/face/v3/search"
-        headers = {'Content-Type': 'application/json'}
-        group_id_list = eval(self._group_list)
-        img = self.get_picture()
-        img_encode = base64.b64encode(img)
-        data = {'image_type': 'BASE64',
-                'image': img_encode,
-                'access_token': self.get_token(),
-                'group_id_list': group_id_list,
-                'liveness_control': self._liveness}
-        response = requests.post(url=request_url, headers=headers, data=data)
-        ret_json = json.loads(response.text)
-        for key in ATTR_LIST:
-            ATTR_LIST[key] = 'null'
-        if 'result' in ret_json and ret_json['result'] is not None:
-            for key in ATTR_LIST:
-                ATTR_LIST[key] = ret_json['result']['user_list'][0][key]
-            self._person_name = ATTR_LIST[ATTR_UID] + ".jpg"
-            save_path = self._save_path + self._person_name
-            self.save_picture(save_path, img)
-            score = ret_json['result']['user_list'][0]['score']
-            if score > PASS_SCORE:
-                return True
-        return False
-
-    def exists_path(self):
-        import os
-        docker_path = "/config"
-        hassbian_path = "/home/homeassistant/.homeassistant"
-        raspbian_path = "/home/pi/.homeassistant"
-        path_list = [docker_path, hassbian_path, raspbian_path]
-        for path in path_list:
-            if os.path.exists(path):
-                path = path + "/www/images/"
-                if not (os.path.exists(path)):
-                    os.makedirs(path)
-                self._save_path = path
-                break
+        origin_img = self.get_picture()
+        encode_img= base64.b64encode(origin_img)
+        encode_img = bytes.decode(encode_img)
+        image_type = 'BASE64'
+        ret = self._baidu_client.multiSearch(encode_img, image_type, self._group_list, self._options)
+        self._attr = {}
+        self._attr[ATTR_GROUP_ID] = 'None'
+        self._attr[ATTR_UID] = 'None'
+        self._attr[ATTR_USER_INFO] = 'None'
+        self._attr[ATTR_SCORE] = 0
+        self._attr[ATTR_FACE_NUM] = 0
+        self._attr[ATTR_MATCH_NUM] = 0
+        self._attr[ATTR_USER_LIST] = []
+        max_score_person = None
+        if ret['result'] is not None:
+            self._attr[ATTR_FACE_NUM] = ret['result']['face_num']
+            for i in ret['result']['face_list']:
+                if i['user_list']:
+                    if max_score_person is None:
+                        max_score_person = i['user_list'][0]
+                    elif i['user_list'][0]['score'] > max_score_person['score']:
+                        max_score_person = i['user_list'][0]
+                    self._attr[ATTR_MATCH_NUM] += 1
+                    self._attr[ATTR_USER_LIST].append(i['user_list'][0]['user_id'])
+        self._state = False
+        if max_score_person is not None:
+            self._state = True
+            self._attr[ATTR_GROUP_ID] = max_score_person[ATTR_GROUP_ID]
+            self._attr[ATTR_UID] = max_score_person[ATTR_UID]
+            self._attr[ATTR_USER_INFO] = max_score_person[ATTR_USER_INFO]
+            self._attr[ATTR_SCORE] = max_score_person[ATTR_SCORE]
+            self.save_picture(max_score_person[ATTR_UID], origin_img)

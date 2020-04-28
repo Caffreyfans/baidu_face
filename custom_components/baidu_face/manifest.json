@@ -1,6 +1,8 @@
 {
   "domain": "baidu_face",
-  "name": "baidu_face",
+  "name": "Baibu face",
   "documentation": "https://github.com/Caffreyfans/baidu_identity",
-  "codeowners": ["@Caffreyfans"]
+  "dependencies": [],
+  "codeowners": ["@Caffreyfans"],
+  "requirements": ["baidu-aip==2.2.18.0"]
 }

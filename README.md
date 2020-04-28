@@ -2,9 +2,15 @@
 
 程序可能存在 BUG,如有任何问题请提出我会在第一时间解决。
     
-![演示](gif/demo.gif)
+![演示](src/demo.gif)
 
 ## 版本更新提示
+---
+> **2020-04-28**<br />
+> 增加人脸数统计， M:N 人脸对比
+> 改用百度 python SDK
+> 配置文件变动，请注意修改
+
 ---
 > **2020-04-06**<br />
 > 修改语法错误
@@ -23,25 +29,38 @@
 ```YAML
 sensor:
   - platform : baidu_face
-    api_key : "*************"
-    secret_key: "***********"
-    group_list: "['myself','family']" # 格式例子,中间不能含有空格
-    camera_entity_id: "*****"    
-    token: "****************"
+    app_id: "*****************" 
+    api_key: "****************" 
+    secret_key: "*************" 
+    group_list: "group_id1,group_id2" # 格式例子,中间不能含有空格
+    entity_id: "**************"    
+    access_token: "***********"
     # liveness: "NORMAL"
-    # name: "ren lian shi bie"
+    # name: "face indentity"
     # port: 8123
-    # pic_url: "网络、本地图片地址"
+    # score: 80
 ```
 
 | 参数 | 必选 | 类型 | 说明 |
 |---|---|---|---|
+| app_id | 是 | string | 百度人脸识别应用 **AppID** |
 | api_key | 是 | string | 百度人脸识别应用 **API Key** |
 | secret_key | 是 | string | 百度人脸识别应用 **Secret Key** |
 | group_list | 是 | string | 人脸库用户组**组名** (1~10) 个之内|
-| camera_entity_id | 是 | string | ha 中摄像头实体 **id** |
-| token | 是 | string | ha 中永久令牌 **token** |
+| entity_id | 是 | string | homeassistant 中摄像头实体名 **id** |
+| access_token | 是 | string | homeassistant 中永久令牌 **access_token** |
 | liveness | 否 | string | 活体检测控制 <br> **NONE**: 不进行控制 <br> **LOW**:较低的活体要求(高通过率 低攻击拒绝率) <br> **NORMAL**: 一般的活体要求(平衡的攻击拒绝率, 通过率) <br> **HIGH**: 较高的活体要求(高攻击拒绝率 低通过率) <br> 默认: **NORMAL** <br> 若活体检测结果不满足要求，则返回结果中会提示活体检测失败 |
-| name | 否 | string | 该实体名 <br> # 默认: **"ren lian shi bie"**|
-| port | 否 | int | ha 设定的端口号 <br> # 默认: **8123**|
-| pic_url | 否 | string | 识别失败时显示的图片 <br> # 默认: **魔方gif图** |
+| name | 否 | string | 该实体名 <br> # 默认: **"face indentity"**|
+| port | 否 | int | homeassistant 设定的端口号 <br> # 默认: **8123**|
+| score | 否 | int | 百度人脸识别阈值 # 默认: **80**|
+
+## 返回信息说明
+| 名称 | 含义 |
+|---|---|
+| group id  | 人脸搜索得分最高者的 group_id  |
+| user id   | 人脸搜索得分最高者的 user_id   |
+| user info | 人脸搜索得分最高者的 user info |
+| score     | 人脸搜索得分最高者的 score     |
+| face num  | 图像中包含的人脸数             |
+| match_num | 图像中搜索通过的人脸数         |
+| user list | 图像中搜索通过的人的 user_id   |
