@@ -1,8 +1,13 @@
 # face identity for [Home Assistant](https://home-assistant.io)  
-
-程序可能存在 BUG,如有任何问题请提出我会在第一时间解决。
     
 ![演示](src/demo.gif)
+
+## 插件说明
+利用百度人脸识别API，将已接 HomeAssistant 的摄像头中的图像进行 M:N 人脸查找，
+若摄像头中存在人脸，且该人脸与要查找的人脸库中人脸相匹配，则返回相关信息。查找
+成功后，若图像中存在多张人脸，则主要返回得分最高者信息以及其他人脸的 user_id。
+在配置文件夹下的 www/baidu_face/ 文件夹下，若存在以 user_id 为前缀的照片，用
+相关照片替换该同名文件，识别成功时显示的头像照片会为替换内容。
 
 ## 版本更新提示
 ---
@@ -46,9 +51,9 @@ sensor:
 | app_id | 是 | string | 百度人脸识别应用 **AppID** |
 | api_key | 是 | string | 百度人脸识别应用 **API Key** |
 | secret_key | 是 | string | 百度人脸识别应用 **Secret Key** |
-| group_list | 是 | string | 人脸库用户组**组名** (1~10) 个之内|
-| entity_id | 是 | string | homeassistant 中摄像头实体名 **id** |
-| access_token | 是 | string | homeassistant 中永久令牌 **access_token** |
+| group_list | 是 | string | 人脸库用户组 **组名** (1~10) 个之内|
+| entity_id | 是 | string | homeassistant 中摄像头实体名 |
+| access_token | 是 | string | homeassistant 中永久令牌 |
 | liveness | 否 | string | 活体检测控制 <br> **NONE**: 不进行控制 <br> **LOW**:较低的活体要求(高通过率 低攻击拒绝率) <br> **NORMAL**: 一般的活体要求(平衡的攻击拒绝率, 通过率) <br> **HIGH**: 较高的活体要求(高攻击拒绝率 低通过率) <br> 默认: **NORMAL** <br> 若活体检测结果不满足要求，则返回结果中会提示活体检测失败 |
 | name | 否 | string | 该实体名 <br> # 默认: **"face indentity"**|
 | port | 否 | int | homeassistant 设定的端口号 <br> # 默认: **8123**|
