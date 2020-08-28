@@ -141,18 +141,16 @@ class FaceSensor(Entity):
     def get_picture(self):
         """ download picture from homeassistant """
         t = int(round(time.time()))
+        headers = {'Authorization': "Bearer {}".format(self._token),
+                   'content-type': 'application/json'}
         if self._type == "HTTP":
             http_url = "http://127.0.0.1:{}".format(self._port)
             camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
-            headers = {'Authorization': "Bearer {}".format(self._token),
-                       'content-type': 'application/json'}
             response = requests.get(camera_url, headers=headers)
             return response.content
         if self._type == "HTTPS": 
             https_url = "https://127.0.0.1:{}".format(self._port)
             camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(https_url, self._camera_entity_id, t)
-            headers = {'Authorization': "Bearer {}".format(self._token),
-                       'content-type': 'application/json'}
             response = requests.get(camera_url, headers=headers, verify=False)
             return response.content
 
