@@ -38,6 +38,7 @@ DEFAULT_WAITING_PIC = 'https://gitee.com/caffreyfans/baidu_face/raw/dev/src/wait
 DEFAULT_PORT = 8123
 DEFAULT_LIVENESS = 'NORMAL'
 DEFAULT_SCORE = 80
+DEFAULT_REQUEST_TYPE = "HTTP"
 
 SCAN_INTERVAL = timedelta(seconds=2)
 
@@ -77,7 +78,18 @@ def setup_platform(hass, config, add_devices,
     port = config.get(CONF_PORT)
     token = config.get(CONF_ACCESS_TOKEN)
     score = config.get(CONF_SCORE)
-
+    """ check SSL/HTTPS type """
+    try: 
+        http_url = "http://127.0.0.1:{}".format(port)
+        camera_url = "{}/api/camera_proxy/{}".format(http_url, camera_entity_id)
+        headers = {'Authorization': "Bearer {}".format(token),
+               'content-type': 'application/json'}
+        response = requests.get(camera_url, headers=headers)
+        if response.status_code != 200:
+            global DEFAULT_REQUEST_TYPE
+            DEFAULT_REQUEST_TYPE = "HTTPS"
+    except BaseException :
+        DEFAULT_REQUEST_TYPE = "HTTPS"
     baidu_client = AipFace(app_id, api_key, secret_key)
     options = {}
     options["max_face_num"] = 10
@@ -85,11 +97,11 @@ def setup_platform(hass, config, add_devices,
     options["quality_control"] = 'NONE'
     options["liveness_control"] = liveness
     options["max_user_num"] = 10
-    add_devices([FaceSensor(name, camera_entity_id, port, token, baidu_client, group_list, options, tmp_path)])
+    add_devices([FaceSensor(name, camera_entity_id, port, token, baidu_client, group_list, options, tmp_path, DEFAULT_REQUEST_TYPE)])
 
 class FaceSensor(Entity):
 
-    def __init__(self, name, camera_entity_id, port, token, baidu_client:AipFace, group_list, options, tmp_path):
+    def __init__(self, name, camera_entity_id, port, token, baidu_client:AipFace, group_list, options, tmp_path, request_type):
         self._camera_entity_id = camera_entity_id
         self._name = name
         self._port = str(port)
@@ -100,6 +112,7 @@ class FaceSensor(Entity):
         self._state = False
         self._attr = None
         self._tmp_dir = tmp_path
+        self._type = request_type
 
     @property
     def name(self):
@@ -128,12 +141,20 @@ class FaceSensor(Entity):
     def get_picture(self):
         """ download picture from homeassistant """
         t = int(round(time.time()))
-        http_url = "http://127.0.0.1:{}".format(self._port)
-        camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
-        headers = {'Authorization': "Bearer {}".format(self._token),
-                   'content-type': 'application/json'}
-        response = requests.get(camera_url, headers=headers)
-        return response.content
+        if self._type == "HTTP":
+            http_url = "http://127.0.0.1:{}".format(self._port)
+            camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(http_url, self._camera_entity_id, t)
+            headers = {'Authorization': "Bearer {}".format(self._token),
+                       'content-type': 'application/json'}
+            response = requests.get(camera_url, headers=headers)
+            return response.content
+        if self._type == "HTTPS": 
+            https_url = "https://127.0.0.1:{}".format(self._port)
+            camera_url = "{}/api/camera_proxy/{}?time={} -o image.jpg".format(https_url, self._camera_entity_id, t)
+            headers = {'Authorization': "Bearer {}".format(self._token),
+                       'content-type': 'application/json'}
+            response = requests.get(camera_url, headers=headers, verify=False)
+            return response.content
 
     def save_picture(self, file_name, content):
         import os
