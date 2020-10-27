@@ -80,16 +80,15 @@ def setup_platform(hass, config, add_devices,
     score = config.get(CONF_SCORE)
     """ check SSL/HTTPS type """
     try: 
-        http_url = "http://127.0.0.1:{}".format(port)
+        http_url = "https://127.0.0.1:{}".format(port)
         camera_url = "{}/api/camera_proxy/{}".format(http_url, camera_entity_id)
         headers = {'Authorization': "Bearer {}".format(token),
                'content-type': 'application/json'}
-        response = requests.get(camera_url, headers=headers)
-        if response.status_code != 200:
-            global DEFAULT_REQUEST_TYPE
+        response = requests.get(camera_url, headers=headers, verify=False)
+        if response.status_code == 200:
             DEFAULT_REQUEST_TYPE = "HTTPS"
-    except BaseException :
-        DEFAULT_REQUEST_TYPE = "HTTPS"
+    except BaseException:
+        DEFAULT_REQUEST_TYPE = "HTTP"
     baidu_client = AipFace(app_id, api_key, secret_key)
     options = {}
     options["max_face_num"] = 10
