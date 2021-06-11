@@ -3,6 +3,7 @@
   "name": "Baibu face",
   "documentation": "https://github.com/Caffreyfans/baidu_identity",
   "dependencies": [],
+  "version": "1.0.0",
   "codeowners": ["@Caffreyfans"],
   "requirements": ["baidu-aip==2.2.18.0"]
 }
