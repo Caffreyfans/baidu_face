@@ -5,6 +5,7 @@ import homeassistant.helpers.config_validation as cv
 import logging
 import requests
 import time
+import hass
 from homeassistant.helpers.entity import Entity
 import base64
 from datetime import timedelta
@@ -135,7 +136,7 @@ class FaceSensor(Entity):
         return self._attr
 
     def update(self):
-        self.face_searching()
+        self._state = await hass.async_add_executor_job(self.face_searching)
 
     def get_picture(self):
         """ download picture from homeassistant """
