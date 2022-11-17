@@ -152,7 +152,7 @@ class FaceSensor(Entity):
     def get_picture(self):
         """ download picture from homeassistant """
         if(self._file_name!='none'):
-            #_LOGGER.error('Get pic from file')
+            #_LOGGER.info('Get pic from file')
             temp_path = self._tmp_dir + self._file_name + '_temp.jpg'
             '''read source picture file '''
             if not os.path.exists(self._file_path):
@@ -181,7 +181,7 @@ class FaceSensor(Entity):
                 return content
 
         else:
-            #_LOGGER.error('Get pic from ha camera')
+            #_LOGGER.info('Get pic from ha camera')
             t = int(round(time.time()))
             headers = {'Authorization': "Bearer {}".format(self._token),
                    'content-type': 'application/json'}
@@ -204,11 +204,11 @@ class FaceSensor(Entity):
         if(self._file_name!='none'):
             img = Image.open(temp_path)
             img.crop(box).save(save_path ,"JPEG", quality=80, optimize=True, progressive=True)
-            _LOGGER.error('save from pic file')
+            _LOGGER.info('save from pic file')
         else:
             img = Image.open(io.BytesIO(content))
             img.crop(box).save(save_path ,"JPEG", quality=80, optimize=True, progressive=True)
-            _LOGGER.error('save from camera IO byte')
+            _LOGGER.info('save from camera IO byte')
         #with open(save_path, 'wb') as fp:
         #  fp.write(content)
         #    fp.close()
@@ -222,7 +222,7 @@ class FaceSensor(Entity):
             base64_data= base64.b64encode(origin_img)
             encode_img = str(base64_data,'UTF-8')
             #encode_img = bytes.decode(encode_img)
-            #_LOGGER.error(encode_img)
+            #_LOGGER.info(encode_img)
 
         else:
             origin_img = self.get_picture()
@@ -243,7 +243,7 @@ class FaceSensor(Entity):
         self._attr[ATTR_FACE_LOCATION] = []
         max_score_person = None
         face_list = []
-        #_LOGGER.error(ret)
+        #_LOGGER.info(ret)
         if ret['result'] is not None:
             self._attr[ATTR_FACE_NUM] = ret['result']['face_num']
             for i in ret['result']['face_list']:
@@ -258,8 +258,8 @@ class FaceSensor(Entity):
                     self._attr[ATTR_USER_LIST].append(i['user_list'][0]['user_id'])
                     self._attr[ATTR_FACE_LOCATION].append(i['location'])
         #        face_list.append(max_score_person)
-        #_LOGGER.error(face_list)
-        #_LOGGER.error(max_score_person)
+        #_LOGGER.info(face_list)
+        #_LOGGER.info(max_score_person)
         self._state = False
         if max_score_person is not None:
             self._state = True
@@ -267,5 +267,5 @@ class FaceSensor(Entity):
             self._attr[ATTR_UID] = max_score_person[ATTR_UID]
             self._attr[ATTR_USER_INFO] = max_score_person[ATTR_USER_INFO]
             self._attr[ATTR_SCORE] = max_score_person[ATTR_SCORE]
-            _LOGGER.error('find some one'+self._attr[ATTR_UID])
+            _LOGGER.info('find some one'+self._attr[ATTR_UID])
             self.save_picture(max_score_person, origin_img)
