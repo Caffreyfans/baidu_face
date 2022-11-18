@@ -21,6 +21,7 @@ sensor:
     group_list: "group_id1,group_id2" # 格式例子,中间不能含有空格
     entity_id: "**************"    
     access_token: "***********"
+    # local_file: "keting_camera_001.jpg"
     # liveness: "NORMAL"
     # name: "face indentity"
     # port: 8123
@@ -39,6 +40,7 @@ sensor:
 | name | 否 | string | 该实体名 <br> # 默认: **"face indentity"**|
 | port | 否 | int | homeassistant 设定的端口号 <br> # 默认: **8123**|
 | score | 否 | int | 百度人脸识别阈值 # 默认: **80**|
+| local_file|否|string| 填写需要检测的文件名，如果该项填写则不会去读取entity_id配置，只根据该文件内容进行人脸识别，识别后如果图片文件不发生变化，则不会重复调用，文件默认位置在homeassistan根目录的 www/baidu_face/文件夹中|
 
 ## 返回信息说明
 | 名称 | 含义 |

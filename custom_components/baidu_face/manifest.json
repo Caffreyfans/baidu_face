@@ -5,5 +5,5 @@
   "dependencies": [],
   "version": "1.0.0",
   "codeowners": ["@Caffreyfans"],
-  "requirements": ["baidu-aip==2.2.18.0"]
+  "requirements": ["baidu-aip==2.2.18.0","pillow==9.2.0"]
 }
